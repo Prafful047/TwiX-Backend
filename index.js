@@ -16,8 +16,7 @@ const port = process.env.PORT || 5000;
 
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri, {
-  tls: true,
-  tlsAllowInvalidCertificates: true,
+
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
@@ -36,13 +35,73 @@ async function run() {
     const userCollection = client.db('database').collection('users');
 
     app.use(cors());
-    // app.use(express.json());
-    
-    app.use('/webhook', bodyParser.raw({ type: 'application/json' }));
-
-    app.use(express.json());
     app.use(useragent.express());
     app.use(requestIp.mw());
+    
+    app.use('/webhook', bodyParser.raw({ type: 'application/json' }));
+    
+    app.post('/webhook', bodyParser.raw({ type: 'application/json' }), async (req, res) => {
+      const sig = req.headers['stripe-signature'];
+      let event;
+
+      try {
+        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+      } catch (err) {
+        console.log(`Webhook signature verification failed.`, err.message);
+        return res.sendStatus(400);
+      }
+
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+
+        const email = session.customer_email;
+        const subscriptionId = session.subscription;
+
+        try {
+          const result = await userCollection.updateOne(
+            { email },
+            { $set: { subscription: subscriptionId } },
+            { upsert: true }
+          );
+          console.log('User subscription updated:', result);
+        } catch (err) {
+          console.error('Error updating user subscription:', err);
+        }
+
+        const transporter = nodemailer.createTransport({
+          service: 'Gmail',
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS,
+          },
+        });
+
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: session.customer_email,
+          subject: 'Subscription Created',
+          text: `Your subscription has been created successfully.\n\n
+          Details:\n
+          - Subscription ID: ${session.subscription}\n
+          - Customer Email: ${session.customer_email}\n
+          - Plan Price : ${session.amount_total / 100}
+          Thank you for subscribing to our service!`,
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error('Error sending email:', error);
+          } else {
+            console.log('Email sent:', info.response);
+          }
+        });
+      }
+
+      res.json({ received: true });
+    });
+
+    app.use(express.json());
+   
 
     // app.use(bodyParser.json());
 
@@ -268,65 +327,7 @@ async function run() {
       }
     });
        //To send mail
-    app.post('/webhook', bodyParser.raw({ type: 'application/json' }), async (req, res) => {
-      const sig = req.headers['stripe-signature'];
-      let event;
-
-      try {
-        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-      } catch (err) {
-        console.log(`Webhook signature verification failed.`, err.message);
-        return res.sendStatus(400);
-      }
-
-      if (event.type === 'checkout.session.completed') {
-        const session = event.data.object;
-
-        const email = session.customer_email;
-        const subscriptionId = session.subscription;
-
-        try {
-          const result = await userCollection.updateOne(
-            { email },
-            { $set: { subscription: subscriptionId } },
-            { upsert: true }
-          );
-          console.log('User subscription updated:', result);
-        } catch (err) {
-          console.error('Error updating user subscription:', err);
-        }
-
-        const transporter = nodemailer.createTransport({
-          service: 'Gmail',
-          auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-          },
-        });
-
-        const mailOptions = {
-          from: process.env.EMAIL_USER,
-          to: session.customer_email,
-          subject: 'Subscription Created',
-          text: `Your subscription has been created successfully.\n\n
-          Details:\n
-          - Subscription ID: ${session.subscription}\n
-          - Customer Email: ${session.customer_email}\n
-          - Plan Price : ${session.amount_total / 100}
-          Thank you for subscribing to our service!`,
-        };
-
-        transporter.sendMail(mailOptions, (error, info) => {
-          if (error) {
-            console.error('Error sending email:', error);
-          } else {
-            console.log('Email sent:', info.response);
-          }
-        });
-      }
-
-      res.json({ received: true });
-    });
+    
 
     app.patch('/userUpdates/:email', async (req, res) => {
       const filter = { email: req.params.email };
