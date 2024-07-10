@@ -26,11 +26,6 @@ const client = new MongoClient(uri, {
   }
 });
 
-const getCurrentISTTime = () => {
-  return new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-};
-
-
 const otps = {};
 
 async function run() {
@@ -42,11 +37,12 @@ async function run() {
 
     app.use(cors());
     // app.use(express.json());
-    app.use(useragent.express());
-    app.use(requestIp.mw());
+    
     app.use('/webhook', bodyParser.raw({ type: 'application/json' }));
 
     app.use(express.json());
+    app.use(useragent.express());
+    app.use(requestIp.mw());
 
     // app.use(bodyParser.json());
 
