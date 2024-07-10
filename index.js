@@ -17,6 +17,7 @@ const port = process.env.PORT || 5000;
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri, {
   tls: true,
+  tlsAllowInvalidCertificates: true,
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
