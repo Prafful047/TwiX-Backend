@@ -115,7 +115,7 @@ async function run() {
         const lastLogin = loginHistory[loginHistory.length - 1];
 
         if (lastLogin && (lastLogin.browser !== currentBrowser || lastLogin.platform !== currentPlatform)) {
-          await axios.post('http://localhost:5000/send-otp', { email });
+          await axios.post(`${process.env.BACKEND_URL}/send-otp`, { email });
           return res.json({ success: true, otpRequired: true });
         }
 
@@ -141,7 +141,7 @@ async function run() {
         // console.log(lastLogin);
 
         if (lastLogin && (lastLogin.browser !== currentBrowser || lastLogin.platform !== currentPlatform)) {
-          await axios.post('http://localhost:5000/send-otp', { email });
+          await axios.post(`${process.env.BACKEND_URL}/send-otp`, { email });
           return res.json({ success: true, otpRequired: true });
         }
 
