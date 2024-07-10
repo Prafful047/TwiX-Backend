@@ -267,7 +267,7 @@ async function run() {
         res.status(500).send({ error: error.message });
       }
     });
-
+       //To send mail
     app.post('/webhook', bodyParser.raw({ type: 'application/json' }), async (req, res) => {
       const sig = req.headers['stripe-signature'];
       let event;
