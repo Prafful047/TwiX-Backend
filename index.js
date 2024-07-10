@@ -26,6 +26,10 @@ const client = new MongoClient(uri, {
   }
 });
 
+const getCurrentISTTime = () => {
+  return new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+};
+
 
 const otps = {};
 
@@ -161,7 +165,7 @@ async function run() {
 
     app.post('/login-history', async (req, res) => {
       const { email } = req.body;
-      const timestamp = new Date().toLocaleString();
+      const timestamp = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
       const parser = new UAParser(req.headers['user-agent']);
       const uaResult = parser.getResult();
       const browser = uaResult.browser.name;
@@ -218,7 +222,7 @@ async function run() {
         const uaResult = parser.getResult();
         const loginEvent = {
           email,
-          timestamp: new Date(),
+          timestamp: new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }),
           browser: uaResult.browser.name,
           os: uaResult.os.name,
           platform: uaResult.os.name,
