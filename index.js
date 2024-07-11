@@ -55,7 +55,8 @@ async function run() {
       const isMobile = deviceType === 'mobile' || deviceType === 'tablet';
       const startTime = 9;
       const endTime = 17;
-      const currentTime = new Date().getHours();
+      const currentTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }).getHours();
+      console.log(currentTime);
     
       if (isMobile && (currentTime < startTime || currentTime >= endTime)) {
         return res.json({ accessAllowed: false });
