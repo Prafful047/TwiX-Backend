@@ -53,9 +53,9 @@ async function run() {
       const deviceType = parser.getDevice().type;
     
       const isMobile = deviceType === 'mobile' || deviceType === 'tablet';
-      const startTime = 9;
-      const endTime = 17;
-      const currentTime = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }).getHours();
+      const startTime = 5;
+      const endTime = 13;
+      const currentTime = new Date().getHours();
       console.log(currentTime);
     
       if (isMobile && (currentTime < startTime || currentTime >= endTime)) {
